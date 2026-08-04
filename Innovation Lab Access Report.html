@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Innovation Lab — Biometric Access Report</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#ffffff; --ink:#1a2233; --muted:#66748c; --line:#e3e8f2;
+    --brand:#2f6df6; --brand-soft:#eaf1ff;
+    --ok:#178a4c; --ok-soft:#e5f6ec;
+    --warn:#c26a00; --warn-soft:#fdf0dd;
+    --bad:#c9324a; --bad-soft:#fce7ea;
+    --inside:#7b3ff2; --inside-soft:#efe7fe;
+    --shadow:0 1px 3px rgba(20,30,60,.08),0 8px 24px rgba(20,30,60,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f141c; --panel:#161d28; --ink:#e7ecf5; --muted:#95a3ba; --line:#26303e;
+      --brand:#5b8dff; --brand-soft:#1a2740;
+      --ok:#5bd08a; --ok-soft:#13291d;
+      --warn:#f0a94b; --warn-soft:#2e2213;
+      --bad:#ff7089; --bad-soft:#2e1620;
+      --inside:#b18bff; --inside-soft:#221a37;
+      --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
+  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#8b5bff);
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex:0 0 auto}
+  h1{font-size:22px;margin:0;letter-spacing:-.2px}
+  .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  section.upload{padding:20px;margin:18px 0}
+  .drop{border:2px dashed var(--line);border-radius:14px;padding:26px;text-align:center;cursor:pointer;
+        transition:.15s;background:var(--panel)}
+  .drop:hover,.drop.drag{border-color:var(--brand);background:var(--brand-soft)}
+  .drop strong{color:var(--brand)}
+  .roles{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  @media(max-width:640px){.roles{grid-template-columns:1fr}}
+  .role{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg)}
+  .role h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .role select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:13px}
+  .role .fname{font-size:12px;color:var(--muted);margin-top:6px;word-break:break-all}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+       padding:8px 14px;border-radius:9px;font-size:13px;cursor:pointer;font-weight:600}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hint{font-size:12px;color:var(--muted)}
+  .swapbar{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;flex-wrap:wrap}
+  .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .toggle input{width:16px;height:16px}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+  .stat{padding:14px 16px}
+  .stat .n{font-size:26px;font-weight:700;letter-spacing:-.5px}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .stat.inside .n{color:var(--inside)} .stat.warn .n{color:var(--warn)}
+  .stat.bad .n{color:var(--bad)} .stat.ok .n{color:var(--ok)}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:20px 0 14px}
+  .tab{padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+       cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
+  .tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
+  .periodbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;margin-bottom:16px}
+  .periodbar .pl{font-weight:700;font-size:13px}
+  .periodbar label{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .periodbar input[type=date]{padding:7px 9px;border-radius:9px;border:1px solid var(--line);
+       background:var(--panel);color:var(--ink);font-size:13px;font-variant-numeric:tabular-nums}
+  .periodbar .hint{margin-left:4px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--panel);
+       cursor:pointer;font-size:12px;font-weight:600;color:var(--muted)}
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .filters select,.filters input{padding:8px 10px;border-radius:9px;border:1px solid var(--line);
+       background:var(--panel);color:var(--ink);font-size:13px}
+  .filters label{font-size:12px;color:var(--muted);margin-right:-4px}
+
+  .panelbox{padding:4px}
+  .tablewrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  thead th{position:sticky;top:0;background:var(--panel);z-index:1;font-size:11px;text-transform:uppercase;
+           letter-spacing:.5px;color:var(--muted)}
+  tbody tr:hover{background:var(--brand-soft)}
+  td.name{font-weight:600;white-space:normal}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .pill.inside{background:var(--inside-soft);color:var(--inside)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .pill.bad{background:var(--bad-soft);color:var(--bad)}
+  .pill.muted{background:var(--line);color:var(--muted)}
+  .dir-in{color:var(--inside);font-weight:600}
+  .dir-out{color:var(--brand);font-weight:600}
+  .section-title{font-size:14px;font-weight:700;margin:6px 0 10px;display:flex;align-items:center;gap:8px}
+  .count-badge{background:var(--line);color:var(--muted);border-radius:20px;padding:1px 9px;font-size:12px;font-weight:700}
+  .empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
+  .legend{font-size:12px;color:var(--muted);margin:10px 2px 0;line-height:1.7}
+  .legend b{color:var(--ink)}
+  .mono{font-variant-numeric:tabular-nums}
+  .timeline{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0}
+  .ev{font-size:11px;padding:2px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+  .ev.in{background:var(--inside-soft);color:var(--inside)}
+  .ev.out{background:var(--brand-soft);color:var(--brand)}
+  /* expandable rows */
+  tr.expandable{cursor:pointer}
+  tr.expandable td:first-child::before{content:"▸";display:inline-block;margin-right:8px;color:var(--muted);
+       transition:transform .15s;font-size:11px}
+  tr.expandable.open td:first-child::before{transform:rotate(90deg);color:var(--brand)}
+  tr.expandable.open{background:var(--brand-soft)}
+  tr.detail>td{padding:0;border-bottom:1px solid var(--line);background:var(--bg)}
+  .detailbox{padding:12px 16px 14px 40px}
+  .scan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+  .scan{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);
+        border-radius:9px;background:var(--panel);font-size:12.5px}
+  .scan .tm{font-variant-numeric:tabular-nums;font-weight:700}
+  .scan .rdr{color:var(--muted);font-size:11.5px;margin-left:auto}
+  .scan .arrow{width:34px;text-align:center;font-weight:800;border-radius:6px;padding:1px 0;font-size:11px}
+  .scan .arrow.in{background:var(--inside-soft);color:var(--inside)}
+  .scan .arrow.out{background:var(--brand-soft);color:var(--brand)}
+  .detailhead{font-size:11.5px;color:var(--muted);margin-bottom:9px}
+  .detailhead b{color:var(--ink)}
+  .hidden{display:none}
+  /* ===== MUT-branded Register document (always light "paper", screen + print) ===== */
+  /* MUT brand: teal #006281 · maroon #812B29 · gold #C99115 */
+  #printArea{--teal:#006281;--teal-d:#015873;--maroon:#812B29;--maroon-d:#56231F;--gold:#C99115;
+       --paper:#ffffff;--pink:#f7f2ee;--ink:#232323;--soft:#e7edf0;--mut-mute:#6b7680;
+       background:var(--paper);color:var(--ink);border-radius:14px;padding:28px 30px;margin-top:4px;
+       border:1px solid #dfe6ea;box-shadow:0 10px 30px rgba(1,88,115,.10)}
+  .doc-head{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+       padding-bottom:16px;border-bottom:3px solid var(--teal);position:relative}
+  .doc-head::after{content:"";position:absolute;left:0;bottom:-3px;width:150px;height:3px;background:var(--gold)}
+  .brandblock{display:flex;align-items:center;gap:14px}
+  .doc-logo{width:58px;height:58px;border-radius:12px;background:var(--maroon);
+       color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;letter-spacing:1px;
+       box-shadow:0 4px 12px rgba(129,43,41,.4);border:2px solid var(--gold)}
+  .org{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);font-weight:800}
+  .doc-title{font-size:24px;font-weight:800;letter-spacing:-.4px;margin-top:2px;color:var(--maroon)}
+  .doc-tag{font-size:12px;font-style:italic;color:var(--gold);font-weight:700;margin-top:2px}
+  .doc-meta{text-align:right}
+  .doc-date{font-size:16px;font-weight:800;color:var(--teal)}
+  .doc-gen{font-size:11.5px;color:var(--mut-mute);margin-top:3px}
+  .doc-summary{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+  .sumcard{border:1px solid var(--soft);border-radius:11px;padding:10px 16px;background:#f7fafb;min-width:100px}
+  .sumcard .sn{font-size:21px;font-weight:800;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+  .sumcard .sl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut-mute);margin-top:5px;font-weight:700}
+  .sumcard.accent{background:var(--teal);border-color:transparent}
+  .sumcard.accent .sn,.sumcard.accent .sl{color:#fff}
+  #regTable{min-width:0;border-collapse:separate;border-spacing:0}
+  #regTable thead th{background:var(--teal);color:#fff;border:none;letter-spacing:.5px;
+       padding:11px 13px;position:static;font-size:11px}
+  #regTable thead th:first-child{border-radius:9px 0 0 0}
+  #regTable thead th:last-child{border-radius:0 9px 0 0}
+  #regTable tbody td{border-bottom:1px solid #eef2f4;padding:9px 13px;color:var(--ink)}
+  #regTable tbody tr:nth-child(even){background:#f4f8f9}
+  #regTable tbody tr:hover{background:rgba(0,98,129,.09)}
+  #regTable .idx{color:var(--mut-mute);font-variant-numeric:tabular-nums;width:38px}
+  #regTable .name{font-weight:700}
+  #regTable .t-in{color:var(--teal);font-weight:700}
+  #regTable .t-out{color:var(--maroon);font-weight:700}
+  .role-tag{display:inline-block;padding:2px 11px;border-radius:20px;font-size:11px;font-weight:800;
+       background:var(--soft);color:var(--mut-mute)}
+  .role-tag.cleaner{background:rgba(0,98,129,.12);color:var(--teal)}
+  .role-tag.support{background:rgba(201,145,21,.18);color:#8a6208}
+  .role-tag.coordinator{background:rgba(129,43,41,.12);color:var(--maroon)}
+  .sig-cell{min-width:170px}
+  .sig-line{display:inline-block;border-bottom:1px dotted var(--mut-mute);width:160px;height:13px}
+  .doc-signoff{display:flex;gap:36px;flex-wrap:wrap;margin-top:28px}
+  .sign-field{display:flex;flex-direction:column;gap:5px}
+  .sign-rule{display:inline-block;width:200px;height:1px;border-bottom:1.5px solid var(--maroon);margin-top:16px}
+  .sign-rule.short{width:120px}
+  .sign-label{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut-mute);font-weight:800}
+  .doc-foot{margin-top:22px;padding-top:12px;border-top:2px solid var(--gold);
+       font-size:11px;color:var(--mut-mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  footer{margin-top:30px;text-align:center;font-size:12px;color:var(--muted)}
+  @media print{
+    @page{margin:12mm}
+    html,body{background:#fff}
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{position:absolute;left:0;top:0;width:100%;border:none;border-radius:0;padding:0;
+         box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #printArea .tablewrap{overflow:visible;border:none}
+    #regTable{font-size:12px}
+    #regTable thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #regTable tbody tr{page-break-inside:avoid}
+    .doc-summary{page-break-inside:avoid}
+  }
+  .export{margin-left:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🔐</div>
+    <div>
+      <h1>Innovation Lab — Biometric Access Report</h1>
+      <div class="sub">Upload the two face-detect logs (inside + outside reader) to see who's unaccounted for, and denied attempts.</div>
+    </div>
+  </header>
+
+  <!-- UPLOAD -->
+  <section class="card upload" id="uploadCard">
+    <div class="drop" id="drop">
+      <div style="font-size:30px">📄📄</div>
+      <p style="margin:8px 0 4px"><strong>Drop your CSV file(s) here</strong> or click to browse</p>
+      <p class="hint">Upload <em>both</em> reader exports (inside + outside) for full entry/exit analysis, or just <em>one</em> file for clock-in/out and the register.</p>
+      <input type="file" id="fileInput" accept=".csv,text/csv" multiple class="hidden">
+    </div>
+
+    <div class="roles" id="roles" style="display:none">
+      <div class="role">
+        <h4>🚪 Entry reader (people coming IN)</h4>
+        <select id="roleIn"></select>
+        <div class="fname" id="fnameIn"></div>
+      </div>
+      <div class="role">
+        <h4>🏃 Exit reader (people going OUT)</h4>
+        <select id="roleOut"></select>
+        <div class="fname" id="fnameOut"></div>
+      </div>
+    </div>
+
+    <div class="swapbar" id="swapbar" style="display:none">
+      <label class="toggle"><input type="checkbox" id="swapChk"> Swap direction (my outside reader is actually the exit)</label>
+      <button class="btn primary" id="analyzeBtn" style="margin-left:auto">Analyze logs →</button>
+    </div>
+    <p class="hint" id="loadMsg" style="margin-top:12px"></p>
+  </section>
+
+  <!-- RESULTS -->
+  <div id="results" class="hidden">
+    <div class="stats" id="stats"></div>
+
+    <div class="card periodbar" id="periodBar">
+      <span class="pl">📆 Period</span>
+      <label>From <input type="date" id="pFrom"></label>
+      <label>To <input type="date" id="pTo"></label>
+      <button class="btn" id="pReset">Reset</button>
+      <div class="chips" id="pQuick"></div>
+      <span class="hint" id="pInfo"></span>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="day">📅 By Day</div>
+      <div class="tab" data-tab="person">👤 By Individual</div>
+      <div class="tab" data-tab="noexit">🏢 Went in, didn't come out</div>
+      <div class="tab" data-tab="noentry">🚪 Out without entry</div>
+      <div class="tab" data-tab="denied">⛔ Denied access</div>
+      <div class="tab" data-tab="register">📋 First-entry register</div>
+    </div>
+
+    <div class="card panelbox">
+      <!-- BY DAY -->
+      <div class="view" id="view-day">
+        <div class="filters">
+          <label>Date</label><select id="daySelect"></select>
+          <label>Search</label><input type="text" id="daySearch" placeholder="name…">
+          <button class="btn export" id="expDay">⬇ Export CSV</button>
+        </div>
+        <div class="tablewrap"><table id="dayTable"></table></div>
+        <div class="legend">
+          <b>Still inside</b> = last scan of the day was an entry (no exit after). •
+          <b>No entry</b> = first scan of the day was an exit (got in without badging in). •
+          Trips are counted after collapsing repeated same-direction scans.
+        </div>
+      </div>
+
+      <!-- BY PERSON -->
+      <div class="view hidden" id="view-person">
+        <div class="filters">
+          <label>Individual</label><select id="personSelect"></select>
+          <button class="btn export" id="expPerson">⬇ Export CSV</button>
+        </div>
+        <div class="tablewrap"><table id="personTable"></table></div>
+      </div>
+
+      <!-- NO EXIT -->
+      <div class="view hidden" id="view-noexit">
+        <div class="filters">
+          <label>Date</label><select id="noexitDate"></select>
+          <button class="btn export" id="expNoexit">⬇ Export CSV</button>
+        </div>
+        <div class="section-title">🏢 Went in and did not come out <span class="count-badge" id="noexitCount">0</span></div>
+        <div class="tablewrap"><table id="noexitTable"></table></div>
+        <div class="legend">Their last recorded scan was an <b>entry</b> — the system has no exit for them that day, so they are presumed still inside.</div>
+      </div>
+
+      <!-- NO ENTRY -->
+      <div class="view hidden" id="view-noentry">
+        <div class="filters">
+          <label>Date</label><select id="noentryDate"></select>
+          <button class="btn export" id="expNoentry">⬇ Export CSV</button>
+        </div>
+        <div class="section-title">🚪 Went out without a recorded entry <span class="count-badge" id="noentryCount">0</span></div>
+        <div class="tablewrap"><table id="noentryTable"></table></div>
+        <div class="legend">Their first recorded scan was an <b>exit</b> — they appear on the way out with no matching entry (tailgated in, or entry scan missed).</div>
+      </div>
+
+      <!-- DENIED -->
+      <div class="view hidden" id="view-denied">
+        <div class="filters">
+          <label>Date</label><select id="deniedDate"></select>
+          <label>Reader</label><select id="deniedReader"><option value="">Both</option><option value="in">Entry</option><option value="out">Exit</option></select>
+          <button class="btn export" id="expDenied">⬇ Export CSV</button>
+        </div>
+        <div class="section-title">⛔ Denied / not identified attempts <span class="count-badge" id="deniedCount">0</span></div>
+        <div class="tablewrap"><table id="deniedTable"></table></div>
+        <div class="legend">Biometric could not match a face (<b>Not identified</b>). No identity is attached to these events.</div>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="view hidden" id="view-register">
+        <div class="filters">
+          <label>Date</label><select id="regDate"></select>
+          <label class="toggle"><input type="checkbox" id="regIn" checked> Clock-in <span class="hint">(first scan)</span></label>
+          <label class="toggle"><input type="checkbox" id="regOut" checked> Clock-out <span class="hint">(last scan)</span></label>
+          <label class="toggle"><input type="checkbox" id="regSign"> Signature</label>
+          <button class="btn export" id="expReg">⬇ Export CSV</button>
+          <button class="btn primary" id="printReg">🖨 Print / Save as PDF</button>
+        </div>
+        <div id="printArea">
+          <div class="doc-head">
+            <div class="brandblock">
+              <div class="doc-logo">MUT</div>
+              <div>
+                <div class="org">Mangosuthu University of Technology · Innovation Lab</div>
+                <div class="doc-title">Daily Access Register</div>
+                <div class="doc-tag">shape and own the future</div>
+              </div>
+            </div>
+            <div class="doc-meta">
+              <div class="doc-date" id="regHeadDate"></div>
+              <div class="doc-gen" id="regHeadMeta"></div>
+            </div>
+          </div>
+
+          <div class="doc-summary" id="regSummary"></div>
+
+          <div class="tablewrap"><table id="regTable"></table></div>
+
+          <div class="doc-signoff">
+            <div class="sign-field"><span class="sign-rule"></span><span class="sign-label">Compiled by</span></div>
+            <div class="sign-field"><span class="sign-rule"></span><span class="sign-label">Authorised by</span></div>
+            <div class="sign-field"><span class="sign-rule short"></span><span class="sign-label">Date</span></div>
+          </div>
+          <div class="doc-foot" id="regFoot"></div>
+        </div>
+        <div class="legend">Each person's <b>first entry</b> for the selected day, in arrival order, with their role. Use <b>Print / Save as PDF</b> and pick "Save as PDF" as the destination. Tip: enable <b>Background graphics</b> in the print dialog to keep the colours.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Runs entirely in your browser — no data leaves this device. &nbsp;·&nbsp; Reusable: reload the page to analyze another pair of logs.
+  </footer>
+</div>
+
+<script>
+"use strict";
+// ---------- identity merge (same person recorded under different names) ----------
+// Add "variant": "canonical name" pairs here to merge people. Case-insensitive.
+const NAME_ALIASES = {
+  "thandazani": "Thandaza",
+  "mr motsilili": "Phomolo"
+};
+function canon(name){
+  const n = name.replace(/\s+/g,' ').trim();          // collapse double spaces
+  const key = n.toLowerCase();
+  return NAME_ALIASES[key] || n;
+}
+
+// ---------- roles / designations (add "Name":"Role" pairs here) ----------
+const ROLES = {
+  "Phume": "Cleaner",
+  "Sthenjwa": "Support",
+  "Phomolo": "Coordinator"
+};
+const DEFAULT_ROLE = "Innovator";
+function roleOf(name){ return ROLES[name] || DEFAULT_ROLE; }
+
+// ---------- state ----------
+const files = {};            // filename -> {name, rows}
+let DATA = null;             // computed analysis
+const $ = id => document.getElementById(id);
+
+// ---------- CSV parsing ----------
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+  if(!lines.length) return [];
+  const delim = (lines[0].split(';').length >= lines[0].split(',').length) ? ';' : ',';
+  const head = lines[0].split(delim).map(s => s.trim().toLowerCase());
+  const ix = {
+    date: head.indexOf('date'), time: head.indexOf('time'),
+    event: head.indexOf('event'), name: head.indexOf('name'), id: head.indexOf('id')
+  };
+  const out = [];
+  for(let i=1;i<lines.length;i++){
+    const p = lines[i].split(delim);
+    if(p.length < 3) continue;
+    const rawDate = (p[ix.date]||'').trim();
+    const time = (p[ix.time]||'').trim();
+    const event = (p[ix.event]||'').trim();
+    const name = ix.name>=0 ? canon(p[ix.name]||'') : '';
+    const id = ix.id>=0 ? (p[ix.id]||'').trim() : '';
+    if(!rawDate || !time) continue;
+    const dk = dateKey(rawDate);
+    if(!dk) continue;
+    out.push({ dateKey:dk, dateDisp:dk.split('-').reverse().join('/'),
+      time, timeSec:toSec(time), event, name, id,
+      granted: /grant/i.test(event) });
+  }
+  return out;
+}
+// DD/MM/YY -> YYYY-MM-DD (sortable)
+function dateKey(s){
+  const m = s.split(/[\/\-.]/);
+  if(m.length<3) return null;
+  let [d,mo,y] = m.map(x=>x.trim());
+  if(y.length===2) y = '20'+y;
+  d=d.padStart(2,'0'); mo=mo.padStart(2,'0');
+  if(isNaN(+d)||isNaN(+mo)||isNaN(+y)) return null;
+  return `${y}-${mo}-${d}`;
+}
+function toSec(t){const p=t.split(':').map(Number);return (p[0]||0)*3600+(p[1]||0)*60+(p[2]||0);}
+function prettyDate(dk){
+  const [y,m,d]=dk.split('-');
+  const dt=new Date(+y,+m-1,+d);
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[dt.getDay()]} ${+d} ${mon[+m-1]} ${y}`;
+}
+
+// ---------- file handling ----------
+function handleFiles(list){
+  let read = 0, total = list.length;
+  if(!total) return;
+  for(const f of list){
+    const rd = new FileReader();
+    rd.onload = e => {
+      files[f.name] = { name:f.name, rows: parseCSV(e.target.result) };
+      if(++read === total) afterLoad();
+    };
+    rd.readAsText(f);
+  }
+}
+function afterLoad(){
+  const names = Object.keys(files);
+  const none = `<option value="">— none —</option>`;
+  const optsHTML = names.map(n=>`<option value="${escAttr(n)}">${escHtml(n)}</option>`).join('');
+  $('roleIn').innerHTML  = optsHTML + none;
+  $('roleOut').innerHTML = optsHTML + none;
+  // auto-detect by filename
+  const inside = names.find(n=>/inside/i.test(n));
+  const outside = names.find(n=>/outside/i.test(n));
+  if(names.length===1){                       // single-reader mode
+    $('roleIn').value  = names[0];
+    $('roleOut').value = '';
+  } else {                                     // two readers: entry = outside, exit = inside
+    $('roleIn').value  = outside || names[0];
+    $('roleOut').value = inside  || names[1] || '';
+  }
+  syncFnames();
+  $('roles').style.display='grid';
+  $('swapbar').style.display='flex';
+  $('loadMsg').textContent = `${names.length} file(s) loaded: ` +
+    names.map(n=>`${n} (${files[n].rows.length} rows)`).join('  ·  ') +
+    (names.length===1?' — single-reader mode (upload a second file for entry/exit analysis).':'');
+  $('roleIn').onchange = syncFnames;
+  $('roleOut').onchange = syncFnames;
+}
+function syncFnames(){
+  $('fnameIn').textContent  = $('roleIn').value || '— none —';
+  $('fnameOut').textContent = $('roleOut').value || '— none —';
+}
+
+// ---------- analysis ----------
+function analyze(){
+  let inFile  = $('roleIn').value;
+  let outFile = $('roleOut').value;
+  if($('swapChk').checked){ const t=inFile; inFile=outFile; outFile=t; }
+
+  // single-reader mode: only one file assigned (or the same file twice)
+  const twoReaders = inFile && outFile && inFile!==outFile;
+  const singleReader = !twoReaders;
+  const events = [];
+  if(twoReaders){
+    (files[inFile].rows ||[]).forEach(r => events.push({...r, dir:'in'}));
+    (files[outFile].rows||[]).forEach(r => events.push({...r, dir:'out'}));
+  } else {
+    const f = inFile || outFile;
+    if(!f || !files[f]){ alert('Please upload at least one log file.'); return; }
+    files[f].rows.forEach(r => events.push({...r, dir:'in'}));  // direction unknown with one reader
+  }
+
+  // denied (not identified / not granted)
+  const denied = events.filter(e => !e.granted)
+                       .sort((a,b)=> a.dateKey.localeCompare(b.dateKey) || a.timeSec-b.timeSec);
+
+  // group granted by name+date
+  const grantedNamed = events.filter(e => e.granted && e.name);
+  const pdMap = new Map();     // key name||date
+  const dates = new Set(), people = new Set();
+  for(const e of grantedNamed){
+    people.add(e.name); dates.add(e.dateKey);
+    const k = e.name+'||'+e.dateKey;
+    if(!pdMap.has(k)) pdMap.set(k, {name:e.name, dateKey:e.dateKey, events:[]});
+    pdMap.get(k).events.push(e);
+  }
+
+  const personDays = [];
+  for(const pd of pdMap.values()){
+    pd.events.sort((a,b)=> a.timeSec-b.timeSec);
+    // collapse consecutive same-direction scans into trips
+    const trips=[];
+    for(const e of pd.events){ if(!trips.length || trips[trips.length-1].dir!==e.dir) trips.push(e); }
+    pd.trips = trips;
+    pd.inCount  = trips.filter(t=>t.dir==='in').length;
+    pd.outCount = trips.filter(t=>t.dir==='out').length;
+    pd.rawScans = pd.events.length;
+    pd.firstDir = trips[0].dir;
+    pd.lastDir  = trips[trips.length-1].dir;
+    pd.first = pd.events[0];
+    pd.last  = pd.events[pd.events.length-1];
+    pd.noExit  = !singleReader && pd.lastDir==='in';    // went in, never scanned out
+    pd.noEntry = !singleReader && pd.firstDir==='out';  // scanned out before any entry
+    personDays.push(pd);
+  }
+
+  DATA = {
+    personDays,
+    denied,
+    dates: [...dates].sort(),
+    people: [...people].sort((a,b)=>a.localeCompare(b)),
+    inFileName:inFile, outFileName:outFile,
+    singleReader,
+    byKey: k => pdMap.get(k)
+  };
+  renderAll();
+}
+
+// ---------- rendering ----------
+function statusPills(pd){
+  if(DATA.singleReader) return `<span class="pill muted">${pd.rawScans} scan${pd.rawScans>1?'s':''}</span>`;
+  let h='';
+  if(pd.noExit)  h+=`<span class="pill inside">Still inside</span> `;
+  else           h+=`<span class="pill ok">Exited</span> `;
+  if(pd.noEntry) h+=`<span class="pill warn">No entry scan</span>`;
+  return h;
+}
+// ----- period filter -----
+let period = {from:null, to:null};
+function inPeriod(dk){ return (!period.from || dk>=period.from) && (!period.to || dk<=period.to); }
+function datesInPeriod(){ return DATA.dates.filter(inPeriod); }
+
+function renderAll(){
+  $('uploadCard').classList.add('hidden');
+  $('results').classList.remove('hidden');
+
+  // set up period inputs to full data range on first analysis
+  const first=DATA.dates[0], last=DATA.dates[DATA.dates.length-1];
+  $('pFrom').min=$('pTo').min=first; $('pFrom').max=$('pTo').max=last;
+  $('pFrom').value=first; $('pTo').value=last;
+  period={from:first, to:last};
+  buildQuickChips(first,last);
+
+  applyPeriod();   // populates selects + renders every view for the period
+}
+
+function applyPeriod(){
+  period.from=$('pFrom').value||null; period.to=$('pTo').value||null;
+  if(period.from && period.to && period.from>period.to){ // keep sane order
+    const t=period.from; period.from=period.to; period.to=t;
+    $('pFrom').value=period.from; $('pTo').value=period.to;
+  }
+  const dOn = datesInPeriod();
+  $('pInfo').textContent = dOn.length
+    ? `${dOn.length} day(s) in range · ${prettyDate(dOn[0])} → ${prettyDate(dOn[dOn.length-1])}`
+    : 'No days in this range';
+
+  renderStats();
+  const dateOpts = dOn.map(d=>`<option value="${d}">${prettyDate(d)}</option>`).join('');
+  const dateOptsAll = `<option value="">All dates in period</option>`+dateOpts;
+  // preserve day selection if still valid, else last day in range
+  const prevDay=$('daySelect').value;
+  $('daySelect').innerHTML = dateOpts || `<option value="">—</option>`;
+  $('daySelect').value = dOn.includes(prevDay)?prevDay:(dOn[dOn.length-1]||'');
+  const prevReg=$('regDate').value;
+  $('regDate').innerHTML = dateOpts || `<option value="">—</option>`;
+  $('regDate').value = dOn.includes(prevReg)?prevReg:(dOn[dOn.length-1]||'');
+  $('personSelect').innerHTML = DATA.people.map(p=>`<option>${escHtml(p)}</option>`).join('');
+  $('noexitDate').innerHTML  = dateOptsAll;
+  $('noentryDate').innerHTML = dateOptsAll;
+  $('deniedDate').innerHTML  = dateOptsAll;
+
+  renderDay(); renderPerson(); renderNoexit(); renderNoentry(); renderDenied(); renderRegister();
+}
+
+function renderStats(){
+  const pdP = DATA.personDays.filter(p=>inPeriod(p.dateKey));
+  const denP = DATA.denied.filter(e=>inPeriod(e.dateKey));
+  const ppl = new Set(pdP.map(p=>p.name));
+  const dys = new Set(pdP.map(p=>p.dateKey));
+  const single = DATA.singleReader;
+  const noExitTot  = single?'—':pdP.filter(p=>p.noExit).length;
+  const noEntryTot = single?'—':pdP.filter(p=>p.noEntry).length;
+  $('stats').innerHTML = `
+    <div class="card stat"><div class="n">${ppl.size}</div><div class="l">Individuals</div></div>
+    <div class="card stat"><div class="n">${dys.size}</div><div class="l">Days in period</div></div>
+    <div class="card stat"><div class="n mono">${pdP.length}</div><div class="l">Person-days</div></div>
+    <div class="card stat inside"><div class="n">${noExitTot}</div><div class="l">Went in, no exit</div></div>
+    <div class="card stat warn"><div class="n">${noEntryTot}</div><div class="l">Out without entry</div></div>
+    <div class="card stat bad"><div class="n">${denP.length}</div><div class="l">Denied / not identified</div></div>`
+    + (single?`<div class="card stat" style="grid-column:1/-1"><div class="l">📄 Single-reader mode — clock-in/out and the register work; entry/exit anomalies need both reader files.</div></div>`:'');
+}
+
+function buildQuickChips(first,last){
+  // offer month presets + full range
+  const months=[...new Set(DATA.dates.map(d=>d.slice(0,7)))].sort();
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html=`<span class="chip" data-from="${first}" data-to="${last}">All</span>`;
+  html+=`<span class="chip" data-quick="7">Last 7 days</span>`;
+  months.forEach(m=>{
+    const [y,mm]=m.split('-'); const from=m+'-01';
+    const to=DATA.dates.filter(d=>d.startsWith(m)).sort().pop();
+    html+=`<span class="chip" data-from="${from}" data-to="${to}">${mon[+mm-1]} ${y}</span>`;
+  });
+  $('pQuick').innerHTML=html;
+}
+
+function renderDay(){
+  const dk = $('daySelect').value;
+  const q  = $('daySearch').value.trim().toLowerCase();
+  let rows = DATA.personDays.filter(p=>p.dateKey===dk);
+  if(q) rows = rows.filter(p=>p.name.toLowerCase().includes(q));
+  rows.sort((a,b)=> (b.noExit-a.noExit)||(b.noEntry-a.noEntry)|| a.name.localeCompare(b.name));
+  const single = DATA.singleReader;
+  const dir = (t,d)=> single ? t : `${t} <span class="dir-${d}">${d==='in'?'IN':'OUT'}</span>`;
+  const body = rows.map((pd,i)=>`
+    <tr class="expandable" data-row="${i}">
+      <td class="name">${escHtml(pd.name)}</td>
+      <td>${statusPills(pd)}</td>
+      <td class="mono">${dir(pd.first.time,pd.firstDir)}</td>
+      <td class="mono">${dir(pd.last.time,pd.lastDir)}</td>
+      <td class="mono">${single?'—':pd.inCount+' / '+pd.outCount}</td>
+      <td class="mono">${pd.rawScans}</td>
+    </tr>
+    <tr class="detail hidden" data-detail="${i}"><td colspan="6">${scanDetail(pd)}</td></tr>`).join('');
+  $('dayTable').innerHTML = `
+    <thead><tr><th>Name</th><th>Status</th><th>First scan</th><th>Last scan</th><th>${single?'—':'In / Out trips'}</th><th>Total scans</th></tr></thead>
+    <tbody>${body || emptyRow(6,'No activity for this day.')}</tbody>`;
+}
+
+// detailed scan list for one person on one day (used by the expandable dropdown)
+function scanDetail(pd){
+  const single = DATA.singleReader;
+  const scans = pd.events.map(e=>`
+    <div class="scan">
+      ${single?'<span class="arrow in">SCAN</span>':`<span class="arrow ${e.dir}">${e.dir==='in'?'IN':'OUT'}</span>`}
+      <span class="tm">${e.time}</span>
+      <span class="rdr">${single?'reader':(e.dir==='in'?'Entry reader':'Exit reader')}</span>
+    </div>`).join('');
+  const meta = single
+    ? `${pd.rawScans} scan(s) · first ${pd.first.time} · last ${pd.last.time}`
+    : `${pd.rawScans} scan(s) · <b>${pd.inCount}</b> in / <b>${pd.outCount}</b> out · last direction: <b>${pd.lastDir==='in'?'entry (still inside)':'exit'}</b>`;
+  return `<div class="detailbox">
+    <div class="detailhead"><b>${escHtml(pd.name)}</b> — ${prettyDate(pd.dateKey)} · ${meta}</div>
+    <div class="scan-grid">${scans}</div>
+  </div>`;
+}
+
+function renderPerson(){
+  const name = $('personSelect').value;
+  const rows = DATA.personDays.filter(p=>p.name===name && inPeriod(p.dateKey)).sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
+  const single = DATA.singleReader;
+  const body = rows.map(pd=>{
+    const tl = pd.events.map(e=> single
+      ? `<span class="ev in">${e.time}</span>`
+      : `<span class="ev ${e.dir}">${e.time} ${e.dir==='in'?'▸in':'◂out'}</span>`).join('');
+    return `<tr>
+      <td class="mono">${prettyDate(pd.dateKey)}</td>
+      <td>${statusPills(pd)}</td>
+      <td class="mono">${single?pd.rawScans:pd.inCount+' / '+pd.outCount}</td>
+      <td><div class="timeline">${tl}</div></td>
+    </tr>`;
+  }).join('');
+  $('personTable').innerHTML = `
+    <thead><tr><th>Date</th><th>Status</th><th>${single?'Scans':'In / Out'}</th><th>Scan timeline</th></tr></thead>
+    <tbody>${body || emptyRow(4,'No records.')}</tbody>`;
+}
+
+function anomTable(kind){
+  const isExit0 = kind==='noexit';
+  if(DATA.singleReader){
+    const html=`<tbody>${emptyRow(5,'Needs both reader files. Upload the second (entry &amp; exit) log to see this.')}</tbody>`;
+    if(isExit0){ $('noexitTable').innerHTML=html; $('noexitCount').textContent='—'; }
+    else       { $('noentryTable').innerHTML=html; $('noentryCount').textContent='—'; }
+    return;
+  }
+  const sel = kind==='noexit'?$('noexitDate').value:$('noentryDate').value;
+  let rows = DATA.personDays.filter(p=> (kind==='noexit'?p.noExit:p.noEntry) && inPeriod(p.dateKey));
+  if(sel) rows = rows.filter(p=>p.dateKey===sel);
+  rows.sort((a,b)=> b.dateKey.localeCompare(a.dateKey) || a.name.localeCompare(b.name));
+  const isExit = kind==='noexit';
+  const body = rows.map(pd=>`
+    <tr>
+      <td class="mono">${prettyDate(pd.dateKey)}</td>
+      <td class="name">${escHtml(pd.name)}</td>
+      <td class="mono">${isExit?pd.last.time:pd.first.time}</td>
+      <td class="mono">${pd.inCount} / ${pd.outCount}</td>
+      <td>${statusPills(pd)}</td>
+    </tr>`).join('');
+  const html = `
+    <thead><tr><th>Date</th><th>Name</th><th>${isExit?'Last (entry) scan':'First (exit) scan'}</th><th>In / Out</th><th>Status</th></tr></thead>
+    <tbody>${body || emptyRow(5,'None found 🎉')}</tbody>`;
+  if(isExit){ $('noexitTable').innerHTML=html; $('noexitCount').textContent=rows.length; }
+  else      { $('noentryTable').innerHTML=html; $('noentryCount').textContent=rows.length; }
+}
+const renderNoexit  = ()=>anomTable('noexit');
+const renderNoentry = ()=>anomTable('noentry');
+
+function renderDenied(){
+  const sel = $('deniedDate').value, rdr = $('deniedReader').value;
+  let rows = DATA.denied.filter(e=>inPeriod(e.dateKey));
+  if(sel) rows = rows.filter(e=>e.dateKey===sel);
+  if(rdr) rows = rows.filter(e=>e.dir===rdr);
+  const body = rows.map(e=>`
+    <tr>
+      <td class="mono">${prettyDate(e.dateKey)}</td>
+      <td class="mono">${e.time}</td>
+      <td><span class="pill ${e.dir==='in'?'inside':'muted'}">${e.dir==='in'?'Entry reader':'Exit reader'}</span></td>
+      <td>${escHtml(e.event)}</td>
+    </tr>`).join('');
+  $('deniedTable').innerHTML = `
+    <thead><tr><th>Date</th><th>Time</th><th>Reader</th><th>Event</th></tr></thead>
+    <tbody>${body || emptyRow(4,'No denied attempts.')}</tbody>`;
+  $('deniedCount').textContent = rows.length;
+}
+
+function hhmm(t){ return t? t.slice(0,5) : ''; }         // HH:MM
+function durHM(a,b){                                       // duration between two "HH:MM:SS"
+  const s=toSec(b)-toSec(a); if(isNaN(s)||s<0) return '';
+  const h=Math.floor(s/3600), m=Math.round((s%3600)/60);
+  return `${h}h ${String(m).padStart(2,'0')}m`;
+}
+function registerRows(dk){
+  return DATA.personDays.filter(p=>p.dateKey===dk).map(pd=>({
+      name:pd.name, role:roleOf(pd.name),
+      clockIn: pd.first.time,                            // morning FIRST scan
+      clockOut: pd.last.time,                            // LAST scan of the day
+      single: pd.rawScans===1                            // only one scan (in==out)
+  })).sort((a,b)=> a.clockIn.localeCompare(b.clockIn) || a.name.localeCompare(b.name));
+}
+function roleClass(role){return role.toLowerCase().replace(/[^a-z]/g,'');}
+function renderRegister(){
+  const dk=$('regDate').value;
+  const showIn=$('regIn').checked, showOut=$('regOut').checked, sig=$('regSign').checked;
+  const showDur = showIn && showOut;
+  const cols = 3 + (showIn?1:0) + (showOut?1:0) + (showDur?1:0) + (sig?1:0);
+  if(!dk){ $('regTable').innerHTML=`<tbody>${emptyRow(cols,'No day selected.')}</tbody>`; return; }
+  const rows=registerRows(dk);
+
+  const head = `<tr><th class="idx">#</th><th>Name</th><th>Role</th>`+
+    (showIn?'<th>Clock-in</th>':'')+(showOut?'<th>Clock-out</th>':'')+
+    (showDur?'<th>On site</th>':'')+(sig?'<th>Signature</th>':'')+`</tr>`;
+  const body=rows.map((r,i)=>`
+    <tr>
+      <td class="idx">${i+1}</td>
+      <td class="name">${escHtml(r.name)}</td>
+      <td><span class="role-tag ${roleClass(r.role)}">${escHtml(r.role)}</span></td>
+      ${showIn ?`<td class="mono t-in">${hhmm(r.clockIn)}</td>`:''}
+      ${showOut?`<td class="mono t-out">${r.single?'<span class="pill muted">single scan</span>':hhmm(r.clockOut)}</td>`:''}
+      ${showDur?`<td class="mono">${r.single?'—':durHM(r.clockIn,r.clockOut)}</td>`:''}
+      ${sig?'<td class="sig-cell"><span class="sig-line"></span></td>':''}
+    </tr>`).join('');
+  $('regTable').innerHTML=`<thead>${head}</thead><tbody>${body || emptyRow(cols,'No activity for this day.')}</tbody>`;
+
+  // header meta
+  $('regHeadDate').textContent=prettyDate(dk);
+  const now=new Date();
+  $('regHeadMeta').innerHTML=`Generated ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+
+  // summary
+  const present=rows.length;
+  const earliest = rows[0]?hhmm(rows[0].clockIn):'—';
+  const latest = rows.reduce((mx,r)=> r.clockOut>mx?r.clockOut:mx, '');
+  const roleCounts={};
+  rows.forEach(r=>{roleCounts[r.role]=(roleCounts[r.role]||0)+1;});
+  const roleCards=Object.entries(roleCounts).sort((a,b)=>b[1]-a[1])
+    .map(([role,n])=>`<div class="sumcard"><div class="sn">${n}</div><div class="sl">${escHtml(role)}</div></div>`).join('');
+  $('regSummary').innerHTML=`
+    <div class="sumcard accent"><div class="sn">${present}</div><div class="sl">Attendance</div></div>
+    ${showIn?`<div class="sumcard"><div class="sn">${earliest}</div><div class="sl">Earliest in</div></div>`:''}
+    ${showOut?`<div class="sumcard"><div class="sn">${hhmm(latest)||'—'}</div><div class="sl">Latest out</div></div>`:''}
+    ${roleCards}`;
+  $('regFoot').innerHTML=`<span>MUT Innovation Lab · biometric face-detect register — confidential</span><span>${present} present · ${prettyDate(dk)}</span>`;
+}
+
+// ---------- CSV export ----------
+function download(filename, rows){
+  const csv = rows.map(r=>r.map(c=>{
+    const s=String(c??''); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+}
+
+// ---------- helpers ----------
+function emptyRow(cols,msg){return `<tr><td colspan="${cols}" class="empty">${msg}</td></tr>`;}
+function escHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function escAttr(s){return escHtml(s).replace(/'/g,'&#39;');}
+
+// ---------- wire up ----------
+const drop=$('drop'), fi=$('fileInput');
+drop.onclick=()=>fi.click();
+fi.onchange=e=>handleFiles(e.target.files);
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));
+drop.addEventListener('drop',e=>handleFiles(e.dataTransfer.files));
+$('analyzeBtn').onclick=analyze;
+
+// tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  $('view-'+t.dataset.tab).classList.remove('hidden');
+});
+
+// expand/collapse individual rows in By Day
+$('dayTable').addEventListener('click',e=>{
+  const tr=e.target.closest('tr.expandable'); if(!tr) return;
+  const det=$('dayTable').querySelector(`tr.detail[data-detail="${tr.dataset.row}"]`);
+  tr.classList.toggle('open'); if(det) det.classList.toggle('hidden');
+});
+
+// period controls
+$('pFrom').onchange=applyPeriod; $('pTo').onchange=applyPeriod;
+$('pReset').onclick=()=>{ $('pFrom').value=DATA.dates[0]; $('pTo').value=DATA.dates[DATA.dates.length-1]; applyPeriod(); };
+$('pQuick').addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c) return;
+  if(c.dataset.quick){ // last N calendar days relative to the latest date in data
+    const last=DATA.dates[DATA.dates.length-1];
+    const d=new Date(last+'T12:00'); d.setDate(d.getDate()-(+c.dataset.quick-1));
+    const fmt=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    $('pFrom').value=fmt; $('pTo').value=last;
+  } else { $('pFrom').value=c.dataset.from; $('pTo').value=c.dataset.to; }
+  applyPeriod();
+});
+
+// filter events
+$('daySelect').onchange=renderDay; $('daySearch').oninput=renderDay;
+$('personSelect').onchange=renderPerson;
+$('noexitDate').onchange=renderNoexit; $('noentryDate').onchange=renderNoentry;
+$('deniedDate').onchange=renderDenied; $('deniedReader').onchange=renderDenied;
+$('regDate').onchange=renderRegister; $('regSign').onchange=renderRegister;
+$('regIn').onchange=renderRegister; $('regOut').onchange=renderRegister;
+$('printReg').onclick=()=>window.print();
+
+// exports
+$('expDay').onclick=()=>{
+  const dk=$('daySelect').value;
+  const rows=[['Date','Name','Status','FirstScan','FirstDir','LastScan','LastDir','InTrips','OutTrips','TotalScans']];
+  DATA.personDays.filter(p=>p.dateKey===dk).forEach(p=>rows.push([prettyDate(dk),p.name,
+    (p.noExit?'Still inside;':'Exited;')+(p.noEntry?'No entry scan':''),
+    p.first.time,p.firstDir,p.last.time,p.lastDir,p.inCount,p.outCount,p.rawScans]));
+  download(`day_${dk}.csv`,rows);
+};
+$('expPerson').onclick=()=>{
+  const name=$('personSelect').value;
+  const rows=[['Date','Name','Status','InTrips','OutTrips','FirstScan','LastScan']];
+  DATA.personDays.filter(p=>p.name===name && inPeriod(p.dateKey)).forEach(p=>rows.push([p.dateDisp,name,
+    (p.noExit?'Still inside;':'Exited;')+(p.noEntry?'No entry scan':''),p.inCount,p.outCount,p.first.time,p.last.time]));
+  download(`person_${name}.csv`,rows);
+};
+function expAnom(kind){
+  const isExit=kind==='noexit';
+  const sel= isExit?$('noexitDate').value:$('noentryDate').value;
+  const rows=[['Date','Name','KeyScan','InTrips','OutTrips','Status']];
+  DATA.personDays.filter(p=>(isExit?p.noExit:p.noEntry)&&inPeriod(p.dateKey)&&(!sel||p.dateKey===sel))
+    .forEach(p=>rows.push([p.dateDisp,p.name,isExit?p.last.time:p.first.time,p.inCount,p.outCount,
+      isExit?'Went in, did not come out':'Out without entry']));
+  download(`${isExit?'no_exit':'no_entry'}.csv`,rows);
+}
+$('expNoexit').onclick=()=>expAnom('noexit');
+$('expNoentry').onclick=()=>expAnom('noentry');
+$('expDenied').onclick=()=>{
+  const sel=$('deniedDate').value,rdr=$('deniedReader').value;
+  const rows=[['Date','Time','Reader','Event']];
+  DATA.denied.filter(e=>inPeriod(e.dateKey)&&(!sel||e.dateKey===sel)&&(!rdr||e.dir===rdr))
+    .forEach(e=>rows.push([e.dateDisp,e.time,e.dir==='in'?'Entry':'Exit',e.event]));
+  download('denied.csv',rows);
+};
+$('expReg').onclick=()=>{
+  const dk=$('regDate').value; if(!dk) return;
+  const rows=[['#','Date','Name','Role','ClockIn','ClockOut','OnSite']];
+  registerRows(dk).forEach((r,i)=>rows.push([i+1,dk.split('-').reverse().join('/'),r.name,r.role,
+    r.clockIn, r.single?'single scan':r.clockOut, r.single?'':durHM(r.clockIn,r.clockOut)]));
+  download(`register_${dk}.csv`,rows);
+};
+</script>
+</body>
+</html>
